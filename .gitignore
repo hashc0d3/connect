@@ -1,0 +1,15 @@
+node_modules
+.next
+*.tsbuildinfo
+dist
+out
+coverage
+.env
+*.exe
+/tmp
+/frames
+services/gateway/gen
+.prisma
+*.log
+npm-debug.log*
+.DS_Store
