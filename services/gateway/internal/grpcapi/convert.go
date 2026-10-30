@@ -3,8 +3,8 @@ package grpcapi
 import (
 	"errors"
 
-	"github.com/connect/gateway/internal/sms"
 	connectv1 "github.com/connect/gateway/gen/connect/v1"
+	"github.com/connect/gateway/internal/sms"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

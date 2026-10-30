@@ -31,7 +31,12 @@ func (s *Service) CreateOTP(ctx context.Context, userID, phone string) (string, 
 	if err := s.charge(ctx, userID, cost, "otp"); err != nil {
 		return "", err
 	}
-	code, err := s.Upstream.CreateOTP(ctx, normalized)
+	clientID, err := upstream.ClientMessageID()
+	if err != nil {
+		_ = s.Store.Refund(ctx, userID, cost, 0, "возврат за otp")
+		return "", err
+	}
+	_, code, err := s.Upstream.SendFlashCall(ctx, clientID, normalized)
 	if err != nil {
 		_ = s.Store.Refund(ctx, userID, cost, 0, "возврат за otp")
 		return "", upstreamOTPError(err)
@@ -40,7 +45,7 @@ func (s *Service) CreateOTP(ctx context.Context, userID, phone string) (string, 
 	if code != "" {
 		hash = hashCode(code)
 	}
-	if err := s.Store.InsertOTP(ctx, userID, normalized, hash, "sent"); err != nil {
+	if err := s.Store.InsertOTP(ctx, userID, normalized, hash, "sent", clientID); err != nil {
 		return "", err
 	}
 	if s.Upstream.Mock && s.Reveal && code != "" {
@@ -55,18 +60,10 @@ func (s *Service) ValidateOTP(ctx context.Context, userID, phone, code string) (
 		return "", Fail(422, err.Error())
 	}
 	code = strings.TrimSpace(code)
-	if len(code) != 6 {
-		return "", Fail(422, "Код должен содержать 6 цифр")
+	if len(code) < 4 || len(code) > 8 {
+		return "", Fail(422, "Код должен содержать от 4 до 8 цифр")
 	}
-	if s.Upstream.Mock {
-		return s.validateMockOTP(ctx, userID, normalized, code)
-	}
-	if err := s.Upstream.ValidateOTP(ctx, normalized, code); err != nil {
-		_ = s.Store.MarkOTP(ctx, userID, normalized, "failed")
-		return "", upstreamOTPError(err)
-	}
-	_ = s.Store.MarkOTP(ctx, userID, normalized, "validated")
-	return "OTP is valid", nil
+	return s.validateMockOTP(ctx, userID, normalized, code)
 }
 
 func (s *Service) validateMockOTP(ctx context.Context, userID, phone, code string) (string, error) {
@@ -75,7 +72,10 @@ func (s *Service) validateMockOTP(ctx context.Context, userID, phone, code strin
 		return "", err
 	}
 	got := hashCode(code)
-	if hash == "" || subtle.ConstantTimeCompare([]byte(hash), []byte(got)) != 1 {
+	if hash == "" {
+		return "", Fail(422, "Код ещё не получен")
+	}
+	if subtle.ConstantTimeCompare([]byte(hash), []byte(got)) != 1 {
 		_ = s.Store.MarkOTP(ctx, userID, phone, "failed")
 		return "", Fail(422, "OTP does not exist")
 	}

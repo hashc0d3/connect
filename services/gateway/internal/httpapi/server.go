@@ -64,6 +64,7 @@ func New(db *store.Store, service *sms.Service, internal string) http.Handler {
 	mux.HandleFunc("POST /v2/otp/create", h.createOTP)
 	mux.HandleFunc("POST /v2/otp/validate", h.validateOTP)
 	mux.HandleFunc("POST /internal/messages/{id}/release", h.release)
+	mux.HandleFunc("POST /easysms/v3/webhook", h.easysmsWebhook)
 	return mux
 }
 

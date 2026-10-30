@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net"
 
+	connectv1 "github.com/connect/gateway/gen/connect/v1"
 	"github.com/connect/gateway/internal/authn"
 	"github.com/connect/gateway/internal/sms"
 	"github.com/connect/gateway/internal/store"
-	connectv1 "github.com/connect/gateway/gen/connect/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"

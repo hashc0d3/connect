@@ -1,6 +1,8 @@
 # Connect
 
-Личный кабинет и шлюз SMS. Клиент говорит с Connect по REST или gRPC. Шлюз проверяет свои правила и только после этого вызывает HTTPS API EasySMS: `POST /api/send-sms`, `/api/create-otp`, `/api/validate-otp`.
+Личный кабинет и шлюз SMS. Клиент говорит с Connect по REST или gRPC. Шлюз проверяет свои правила и только после этого вызывает easysms/v3: `POST /api/v3/easysms/{connect_id}/SendMessage`. Подпись уходит как `originator`. Статусы доставки приходят на `POST /easysms/v3/webhook`. OTP — канал `flash_call`: код приходит в том же вебхуке.
+
+Передача проекта следующему разработчику описана в [docs/DEVELOPER.md](docs/DEVELOPER.md).
 
 ## Состав
 
@@ -32,4 +34,4 @@ npm run dev
 Администратор: `admin@connect.local` / `admin12345`  
 Ключ API: `cnt_demo_7f3a9c2e1b`
 
-Пока `EASYSMS_API_KEY` пустой, шлюз не звонит поставщику и отмечает отправку локально. Боевой ключ и адрес задаются в `.env`.
+Пока не заданы `EASYSMS_LOGIN`, `EASYSMS_PASSWORD` и `EASYSMS_CONNECT_ID`, шлюз не звонит поставщику и отмечает отправку локально. Боевые реквизиты задаются в `.env`. Адрес по умолчанию: `https://xml.smstec.ru`.

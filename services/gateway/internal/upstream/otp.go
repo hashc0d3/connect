@@ -3,28 +3,26 @@ package upstream
 import (
 	"context"
 	"crypto/rand"
-	"encoding/json"
 	"fmt"
 )
 
-func (c *Client) CreateOTP(ctx context.Context, phone string) (string, error) {
+func (c *Client) SendFlashCall(ctx context.Context, clientID, phone string) (Accepted, string, error) {
 	if c.Mock {
-		return randomCode()
+		code, err := flashCode()
+		if err != nil {
+			return Accepted{}, "", err
+		}
+		return Accepted{MessageID: "mock-" + clientID, ClientMessageID: clientID}, code, nil
 	}
-	return "", c.post(ctx, "/api/create-otp", map[string]any{"phone": phone})
-}
-
-func (c *Client) ValidateOTP(ctx context.Context, phone, code string) error {
-	if c.Mock {
-		return nil
-	}
-	return c.post(ctx, "/api/validate-otp", map[string]any{
-		"phone": phone,
-		"code":  json.Number(code),
+	accepted, err := c.SendMessage(ctx, Outbound{
+		ClientMessageID: clientID,
+		Messenger:       "flash_call",
+		Recipient:       phone,
 	})
+	return accepted, "", err
 }
 
-func randomCode() (string, error) {
+func flashCode() (string, error) {
 	var buf [3]byte
 	if _, err := rand.Read(buf[:]); err != nil {
 		return "", err

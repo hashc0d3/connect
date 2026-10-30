@@ -51,6 +51,7 @@ func (s *Service) persist(ctx context.Context, req persistRequest) ([]Item, erro
 				Status: req.Status, Extend: policy.ExtendStatus(req.Status), Channel: req.Channel,
 				Cost: item.Cost, Parts: item.Parts, DateCreate: now, DateSend: item.When,
 				Upstream: req.Upstream, CallbackURL: req.Callback,
+				ClientID: item.ClientMessageID, UpstreamID: item.UpstreamID,
 			})
 			if err != nil {
 				return err

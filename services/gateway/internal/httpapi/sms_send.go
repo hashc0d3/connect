@@ -8,9 +8,9 @@ import (
 )
 
 type sendBody struct {
-	Number      string   `json:"number"`
-	Numbers     []string `json:"numbers"`
-	Receivers   []struct {
+	Number    string   `json:"number"`
+	Numbers   []string `json:"numbers"`
+	Receivers []struct {
 		Phone string `json:"phone"`
 	} `json:"receivers"`
 	Text        string  `json:"text"`
@@ -62,11 +62,11 @@ func (h *Handler) send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ok(w, map[string]any{
-		"messages":            itemsJSON(result.Items),
-		"cost":                result.Cost,
-		"excludedDuplicates":  result.Excluded,
-		"excludedBlacklist":   result.Blacklisted,
-		"heldForModeration":   result.Held,
+		"messages":           itemsJSON(result.Items),
+		"cost":               result.Cost,
+		"excludedDuplicates": result.Excluded,
+		"excludedBlacklist":  result.Blacklisted,
+		"heldForModeration":  result.Held,
 	}, result.Message)
 }
 

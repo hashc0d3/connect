@@ -14,7 +14,7 @@ export default function DocsPage() {
       <pre className="code">{`grpcurl -plaintext -H "authorization: Bearer <ключ>" \\
   -d '{"receivers":[{"phone":"79990000000"}],"text":"Test Sms","sign":"CONNECT"}' \\
   localhost:50051 connect.v1.SmsGateway/SendSms`}</pre>
-      <p>Перед вызовом EasySMS Connect проверяет подпись, чёрный список, баланс, наценку и договор. Если ключ поставщика пуст, отправка помечается успешной локально.</p>
+      <p>Перед вызовом easysms/v3 Connect проверяет подпись, чёрный список, баланс, наценку и договор. Одобренная подпись уходит поставщику как originator. Статусы доставки приходят вебхуком. Если логин поставщика не задан, отправка помечается успешной локально.</p>
       <p>Также доступны <code>/v2/sms/status</code>, <code>/v2/sms/list</code>, <code>/v2/balance</code>, <code>/v2/tariffs</code>, <code>/v2/otp/create</code>, <code>/v2/otp/validate</code>, контакты, группы и подписи.</p>
     </main>
   );

@@ -4,12 +4,12 @@ package connect.v1;
 
 option go_package = "github.com/connect/gateway/gen/connect/v1;connectv1";
 
-// SmsGateway — контракт Connect поверх EasySMS.
+// SmsGateway — контракт Connect поверх easysms/v3.
 // Клиент авторизуется метаданными authorization: Bearer <api-ключ Connect>.
-// Шлюз проверяет свои условия и только потом вызывает HTTPS EasySMS:
-//   POST /api/send-sms      { receivers[].phone, text }
-//   POST /api/create-otp    { phone }
-//   POST /api/validate-otp  { phone, code }
+// Шлюз проверяет свои условия и только потом вызывает
+// POST https://xml.smstec.ru/api/v3/easysms/{connect_id}/SendMessage.
+// Подпись уходит как originator. Статусы поставщик присылает на /easysms/v3/webhook.
+// OTP — это flash_call: код приходит в вебхуке и проверяется локально.
 service SmsGateway {
   rpc SendSms(SendSmsRequest) returns (SendSmsResponse);
   rpc CreateOtp(CreateOtpRequest) returns (StatusResponse);

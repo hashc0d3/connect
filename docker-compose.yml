@@ -25,8 +25,11 @@ services:
       GRPC_ADDR: ":50051"
       PUBLIC_LINK_BASE: http://localhost:8080
       INTERNAL_TOKEN: ${INTERNAL_TOKEN:-change-me-internal-token}
-      EASYSMS_BASE_URL: ${EASYSMS_BASE_URL:-https://easysms.co}
-      EASYSMS_API_KEY: ${EASYSMS_API_KEY:-}
+      EASYSMS_BASE_URL: ${EASYSMS_BASE_URL:-https://xml.smstec.ru}
+      EASYSMS_LOGIN: ${EASYSMS_LOGIN:-}
+      EASYSMS_PASSWORD: ${EASYSMS_PASSWORD:-}
+      EASYSMS_CONNECT_ID: ${EASYSMS_CONNECT_ID:-}
+      EASYSMS_WEBHOOK_TOKEN: ${EASYSMS_WEBHOOK_TOKEN:-}
       EASYSMS_MOCK: ${EASYSMS_MOCK:-true}
       MOCK_REVEAL_OTP: ${MOCK_REVEAL_OTP:-true}
     ports:

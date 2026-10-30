@@ -7,10 +7,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Store) InsertOTP(ctx context.Context, userID, phone, codeHash, status string) error {
+func (s *Store) InsertOTP(ctx context.Context, userID, phone, codeHash, status, clientID string) error {
 	_, err := s.pool.Exec(ctx, `
-		INSERT INTO otp_requests (user_id, phone, code_hash, status) VALUES ($1,$2,$3,$4)
-	`, userID, phone, codeHash, status)
+		INSERT INTO otp_requests (user_id, phone, code_hash, status, client_message_id) VALUES ($1,$2,$3,$4,$5)
+	`, userID, phone, codeHash, status, clientID)
 	return err
 }
 

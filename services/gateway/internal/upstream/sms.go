@@ -1,17 +1,66 @@
 package upstream
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+)
 
-func (c *Client) SendSMS(ctx context.Context, phones []string, text string) error {
+type Outbound struct {
+	ClientMessageID string
+	Messenger       string
+	Originator      string
+	Recipient       string
+	Text            string
+}
+
+type Accepted struct {
+	MessageID       string
+	ClientMessageID string
+}
+
+func (c *Client) SendMessage(ctx context.Context, msg Outbound) (Accepted, error) {
+	if msg.Messenger == "" {
+		msg.Messenger = "sms"
+	}
+	if msg.ClientMessageID == "" {
+		id, err := ClientMessageID()
+		if err != nil {
+			return Accepted{}, err
+		}
+		msg.ClientMessageID = id
+	}
 	if c.Mock {
-		return nil
+		return Accepted{MessageID: "mock-" + msg.ClientMessageID, ClientMessageID: msg.ClientMessageID}, nil
 	}
-	receivers := make([]Receiver, 0, len(phones))
-	for _, phone := range phones {
-		receivers = append(receivers, Receiver{Phone: phone})
+	message := map[string]string{
+		"client_message_id": msg.ClientMessageID,
+		"messenger_type":    msg.Messenger,
+		"recipient":         msg.Recipient,
 	}
-	return c.post(ctx, "/api/send-sms", map[string]any{
-		"receivers": receivers,
-		"text":      text,
-	})
+	if msg.Messenger != "flash_call" {
+		message["originator"] = msg.Originator
+		message["text"] = msg.Text
+	}
+	status, raw, err := c.post(ctx, "/api/v3/easysms/"+c.ConnectID+"/SendMessage", c.envelope(map[string]any{"message": message}))
+	if err != nil {
+		return Accepted{}, err
+	}
+	if err := explain(status, raw); err != nil {
+		return Accepted{}, err
+	}
+	var parsed struct {
+		Message struct {
+			MessageID       string `json:"message_id"`
+			ClientMessageID string `json:"client_message_id"`
+		} `json:"message"`
+	}
+	if json.Unmarshal(raw, &parsed) != nil || parsed.Message.MessageID == "" {
+		return Accepted{}, fmt.Errorf("EasySMS вернул ответ без message_id")
+	}
+	id := parsed.Message.ClientMessageID
+	if id == "" {
+		id = msg.ClientMessageID
+	}
+	return Accepted{MessageID: parsed.Message.MessageID, ClientMessageID: id}, nil
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/connect/gateway/internal/sms"
 	connectv1 "github.com/connect/gateway/gen/connect/v1"
+	"github.com/connect/gateway/internal/sms"
 )
 
 func (s *Server) SendSms(ctx context.Context, req *connectv1.SendSmsRequest) (*connectv1.SendSmsResponse, error) {

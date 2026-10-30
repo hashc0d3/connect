@@ -12,7 +12,7 @@ import (
 )
 
 func (s *Service) deliverNow(ctx context.Context, userID string, in SendInput, signName, channel string, drafts []draft, excluded, blacklisted int) (*SendResult, error) {
-	failed := s.pushUpstream(ctx, drafts)
+	failed := s.pushUpstream(ctx, signName, drafts)
 	okDrafts, badDrafts, charged, reason := splitDrafts(drafts, failed)
 
 	var items []Item
@@ -56,36 +56,27 @@ func (s *Service) deliverNow(ctx context.Context, userID string, in SendInput, s
 	}, nil
 }
 
-func (s *Service) pushUpstream(ctx context.Context, drafts []draft) map[int]string {
-	grouped := map[string][]int{}
-	var order []string
-	for i, item := range drafts {
-		if _, ok := grouped[item.Text]; !ok {
-			order = append(order, item.Text)
-		}
-		grouped[item.Text] = append(grouped[item.Text], i)
-	}
+func (s *Service) pushUpstream(ctx context.Context, originator string, drafts []draft) map[int]string {
 	failed := map[int]string{}
-	for _, text := range order {
-		indexes := grouped[text]
-		phones := make([]string, len(indexes))
-		for i, idx := range indexes {
-			phones[i] = drafts[idx].Number
+	for i := range drafts {
+		clientID, err := upstream.ClientMessageID()
+		if err != nil {
+			failed[i] = "не удалось подготовить идентификатор сообщения"
+			continue
 		}
-		for _, chunk := range chunks(phones, 1000) {
-			if err := s.Upstream.SendSMS(ctx, chunk, text); err != nil {
-				msg := upstreamMessage(err)
-				present := map[string]struct{}{}
-				for _, phone := range chunk {
-					present[phone] = struct{}{}
-				}
-				for _, idx := range indexes {
-					if _, ok := present[drafts[idx].Number]; ok {
-						failed[idx] = msg
-					}
-				}
-			}
+		accepted, err := s.Upstream.SendMessage(ctx, upstream.Outbound{
+			ClientMessageID: clientID,
+			Messenger:       "sms",
+			Originator:      originator,
+			Recipient:       drafts[i].Number,
+			Text:            drafts[i].Text,
+		})
+		if err != nil {
+			failed[i] = upstreamMessage(err)
+			continue
 		}
+		drafts[i].ClientMessageID = accepted.ClientMessageID
+		drafts[i].UpstreamID = accepted.MessageID
 	}
 	return failed
 }

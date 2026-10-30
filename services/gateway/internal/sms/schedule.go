@@ -23,18 +23,6 @@ func spread(n int, start, end time.Time) []time.Time {
 	return out
 }
 
-func chunks(list []string, size int) [][]string {
-	var out [][]string
-	for len(list) > 0 {
-		if len(list) < size {
-			size = len(list)
-		}
-		out = append(out, list[:size])
-		list = list[size:]
-	}
-	return out
-}
-
 func randomCode(n int) (string, error) {
 	const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
 	buf := make([]byte, n)

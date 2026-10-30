@@ -7,28 +7,34 @@ import (
 )
 
 type Config struct {
-	DatabaseURL   string
-	HTTPAddr      string
-	GRPCAddr      string
-	PublicLink    string
-	InternalToken string
-	EasySMSURL    string
-	EasySMSKey    string
-	EasySMSMock   bool
-	RevealOTP     bool
+	DatabaseURL     string
+	HTTPAddr        string
+	GRPCAddr        string
+	PublicLink      string
+	InternalToken   string
+	EasySMSURL      string
+	EasySMSLogin    string
+	EasySMSPassword string
+	EasySMSConnect  string
+	EasySMSWebhook  string
+	EasySMSMock     bool
+	RevealOTP       bool
 }
 
 func Load() Config {
 	return Config{
-		DatabaseURL:   env("DATABASE_URL", "postgresql://connect:connect@localhost:5434/connect?sslmode=disable"),
-		HTTPAddr:      env("HTTP_ADDR", ":8080"),
-		GRPCAddr:      env("GRPC_ADDR", ":50051"),
-		PublicLink:    strings.TrimRight(env("PUBLIC_LINK_BASE", "http://localhost:8080"), "/"),
-		InternalToken: env("INTERNAL_TOKEN", "change-me-internal-token"),
-		EasySMSURL:    strings.TrimRight(env("EASYSMS_BASE_URL", "https://easysms.co"), "/"),
-		EasySMSKey:    strings.TrimSpace(os.Getenv("EASYSMS_API_KEY")),
-		EasySMSMock:   envBool("EASYSMS_MOCK", true),
-		RevealOTP:     envBool("MOCK_REVEAL_OTP", true),
+		DatabaseURL:     env("DATABASE_URL", "postgresql://connect:connect@localhost:5434/connect?sslmode=disable"),
+		HTTPAddr:        env("HTTP_ADDR", ":8080"),
+		GRPCAddr:        env("GRPC_ADDR", ":50051"),
+		PublicLink:      strings.TrimRight(env("PUBLIC_LINK_BASE", "http://localhost:8080"), "/"),
+		InternalToken:   env("INTERNAL_TOKEN", "change-me-internal-token"),
+		EasySMSURL:      strings.TrimRight(env("EASYSMS_BASE_URL", "https://xml.smstec.ru"), "/"),
+		EasySMSLogin:    strings.TrimSpace(os.Getenv("EASYSMS_LOGIN")),
+		EasySMSPassword: strings.TrimSpace(os.Getenv("EASYSMS_PASSWORD")),
+		EasySMSConnect:  strings.TrimSpace(os.Getenv("EASYSMS_CONNECT_ID")),
+		EasySMSWebhook:  strings.TrimSpace(os.Getenv("EASYSMS_WEBHOOK_TOKEN")),
+		EasySMSMock:     envBool("EASYSMS_MOCK", true),
+		RevealOTP:       envBool("MOCK_REVEAL_OTP", true),
 	}
 }
 

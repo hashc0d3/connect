@@ -39,7 +39,7 @@ func main() {
 
 	service := &sms.Service{
 		Store:    db,
-		Upstream: upstream.New(cfg.EasySMSURL, cfg.EasySMSKey, cfg.EasySMSMock, cfg.RevealOTP),
+		Upstream: upstream.New(cfg.EasySMSURL, cfg.EasySMSConnect, cfg.EasySMSLogin, cfg.EasySMSPassword, cfg.EasySMSWebhook, cfg.EasySMSMock, cfg.RevealOTP),
 		Links:    cfg.PublicLink,
 		Reveal:   cfg.RevealOTP,
 	}

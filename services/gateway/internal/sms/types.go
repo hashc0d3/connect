@@ -42,10 +42,12 @@ type SendResult struct {
 }
 
 type draft struct {
-	Number   string
-	Text     string
-	Parts    int
-	Cost     decimal.Decimal
-	Operator string
-	When     time.Time
+	Number          string
+	Text            string
+	Parts           int
+	Cost            decimal.Decimal
+	Operator        string
+	When            time.Time
+	ClientMessageID string
+	UpstreamID      string
 }

@@ -51,6 +51,16 @@ func (s *Store) ClaimDue(ctx context.Context, limit int) ([]Message, error) {
 	return list, err
 }
 
+func (s *Store) MarkAccepted(ctx context.Context, id int64, clientID, upstreamID string) error {
+	_, err := s.pool.Exec(ctx, `
+		UPDATE messages
+		SET upstream_state = 'sent', status = 3, extend_status = 'sent', upstream_error = '',
+			client_message_id = $2, upstream_message_id = $3, date_answer = now()
+		WHERE id = $1
+	`, id, clientID, upstreamID)
+	return err
+}
+
 func (s *Store) MarkUpstream(ctx context.Context, id int64, state string, status int, extend, upstreamErr string, answered bool) error {
 	if answered {
 		_, err := s.pool.Exec(ctx, `

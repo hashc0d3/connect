@@ -7,14 +7,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 )
 
-type envelope struct {
-	Status  bool                `json:"status"`
-	Message string              `json:"message"`
-	Data    json.RawMessage     `json:"data"`
-	Errors  map[string][]string `json:"errors"`
+type apiError struct {
+	Code    string `json:"error_code"`
+	Message string `json:"error_message"`
 }
 
 type ValidationError struct {
@@ -24,45 +21,63 @@ type ValidationError struct {
 
 func (e *ValidationError) Error() string { return e.Message }
 
-func (c *Client) post(ctx context.Context, path string, payload any) error {
+func (c *Client) post(ctx context.Context, path string, payload any) (int, []byte, error) {
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return err
+		return 0, nil, err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+path, bytes.NewReader(body))
 	if err != nil {
-		return err
+		return 0, nil, err
 	}
-	req.Header.Set("Authorization", "Bearer "+c.Token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
 	req.Header.Set("Accept", "application/json")
-
 	res, err := c.HTTP.Do(req)
 	if err != nil {
-		return fmt.Errorf("EasySMS недоступен: %w", err)
+		return 0, nil, fmt.Errorf("EasySMS недоступен: %w", err)
 	}
 	defer res.Body.Close()
 	raw, _ := io.ReadAll(io.LimitReader(res.Body, 1<<20))
+	return res.StatusCode, raw, nil
+}
 
-	var env envelope
-	if json.Unmarshal(raw, &env) != nil {
-		return fmt.Errorf("EasySMS вернул непонятный ответ (%d)", res.StatusCode)
+func (c *Client) envelope(payload map[string]any) map[string]any {
+	return map[string]any{
+		"Header":  map[string]string{"login": c.Login, "password": c.Password},
+		"Payload": payload,
 	}
-	if res.StatusCode == http.StatusUnauthorized || strings.Contains(strings.ToLower(env.Message), "unauthenticated") {
-		return fmt.Errorf("ключ EasySMS отклонён")
+}
+
+func explain(status int, raw []byte) error {
+	if status == http.StatusForbidden {
+		return fmt.Errorf("логин или пароль EasySMS отклонены")
 	}
-	if res.StatusCode >= 500 {
-		return fmt.Errorf("EasySMS временно недоступен (%d)", res.StatusCode)
+	var body struct {
+		Error   *apiError `json:"error"`
+		Message struct {
+			Error *apiError `json:"error"`
+		} `json:"message"`
 	}
-	if env.Status {
-		return nil
+	_ = json.Unmarshal(raw, &body)
+	api := body.Error
+	if api == nil {
+		api = body.Message.Error
 	}
-	msg := env.Message
-	if msg == "" {
-		msg = "EasySMS отклонил запрос"
+	if api != nil && (api.Code != "" || api.Message != "") {
+		text := api.Message
+		if text == "" {
+			text = "EasySMS отклонил сообщение"
+		}
+		if api.Code != "" {
+			text = api.Code + ": " + text
+		}
+		return &ValidationError{Message: text}
 	}
-	if len(env.Errors) > 0 {
-		return &ValidationError{Message: msg, Fields: env.Errors}
+	if status >= 500 {
+		return fmt.Errorf("EasySMS временно недоступен (%d)", status)
 	}
-	return fmt.Errorf("%s", msg)
+	if status >= 400 {
+		return fmt.Errorf("EasySMS отклонил запрос (%d)", status)
+	}
+	return nil
 }
